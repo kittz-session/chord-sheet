@@ -3,149 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>コード譜：Isn't she lovely</title>
+    <title>My Session Chords</title>
     <style>
-        body { font-family: "Helvetica Neue", Arial, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { font-size: 24px; color: #2c3e50; margin-bottom: 20px; }
-
+        body { font-family: sans-serif; text-align: center; background-color: #f8f9fa; padding: 15px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
         /* 操作パネル */
         .controls { 
-            margin-bottom: 25px; 
-            background: white; 
-            padding: 15px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
-            position: sticky; 
-            top: 10px; 
-            z-index: 100; 
+            background: white; padding: 15px; border-radius: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            position: sticky; top: 10px; z-index: 100; margin-bottom: 20px;
         }
-        .current-key-display { 
-            font-size: 22px; 
-            font-weight: bold; 
-            margin-top: 10px;
-            color: #2c3e50;
-        }
-        .key-value { color: #e74c3c; } /* 現在のキーを強調 */
+        select { font-size: 18px; padding: 8px; margin-bottom: 10px; width: 80%; border-radius: 5px; }
+        
+        .key-display { font-size: 22px; font-weight: bold; margin: 10px 0; color: #2c3e50; }
+        .key-value { color: #e74c3c; }
 
-        button { font-size: 16px; padding: 12px 20px; cursor: pointer; margin: 5px; border-radius: 8px; border: none; background: #3498db; color: white; transition: 0.2s; }
-        button:hover { background: #2980b9; transform: translateY(-1px); }
+        button { font-size: 16px; padding: 10px 15px; cursor: pointer; margin: 2px; border-radius: 8px; border: none; background: #3498db; color: white; }
         button.reset { background: #e67e22; }
 
-        /* 譜面のレイアウト */
-        .chord-sheet { 
-            background: white; 
-            padding: 30px 20px; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .grid-row {
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            margin-bottom: 10px;
-        }
-        .separator {
-            height: 2px;
-            background-color: #ddd;
-            margin: 25px 0;
-            border-radius: 2px;
-        }
-
-        .measure { 
-            border-left: 2px solid #333; 
-            padding: 15px 0; 
-            font-size: 24px; 
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        /* 譜面 */
+        .chord-sheet { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 5px; }
+        .measure { border-left: 2px solid #333; padding: 15px 0; font-size: 22px; font-weight: bold; position: relative; }
         .measure:last-child { border-right: 2px solid #333; }
-        .root { color: #e74c3c; } 
-        .suffix { color: #2c3e50; }
+        
+        .separator { height: 2px; background-color: #ddd; margin: 20px 0; }
+        .root { color: #e74c3c; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Isn't she lovely</h1>
-
     <div class="controls">
-        <button onclick="changeKey(1)">＋ キーを上げる</button>
-        <button onclick="changeKey(-1)">－ キーを下げる</button>
+        <select id="song-select" onchange="loadSong()">
+            <option value="lovely">Isn't She Lovely</option>
+            <option value="chicken">The Chicken</option>
+        </select>
+
+        <div class="key-display">キー：<span id="current-key-name" class="key-value">-</span></div>
+
+        <button onclick="changeKey(1)">＋ 上げる</button>
+        <button onclick="changeKey(-1)">－ 下げる</button>
         <button class="reset" onclick="resetKey()">リセット</button>
-        
-        <div class="current-key-display">
-            キー：<span id="current-key-name" class="key-value">E</span>
-        </div>
     </div>
 
-    <div class="chord-sheet">
-        <div class="grid-row">
-            <div class="measure"><span class="chord" data-root="C#">C#</span><span class="suffix">m7</span></div>
-            <div class="measure"><span class="chord" data-root="F#">F#</span><span class="suffix">7</span></div>
-            <div class="measure"><span class="chord" data-root="B">B</span><span class="suffix">7sus4</span></div>
-            <div class="measure"><span class="chord" data-root="E">E</span><span class="suffix"></span></div>
+    <div id="sheet-area" class="chord-sheet">
         </div>
-        <div class="grid-row">
-            <div class="measure"><span class="chord" data-root="C#">C#</span><span class="suffix">m7</span></div>
-            <div class="measure"><span class="chord" data-root="F#">F#</span><span class="suffix">7</span></div>
-            <div class="measure"><span class="chord" data-root="B">B</span><span class="suffix">7sus4</span></div>
-            <div class="measure"><span class="chord" data-root="E">E</span><span class="suffix"></span></div>
-        </div>
-
-        <div class="separator"></div>
-
-        <div class="grid-row">
-            <div class="measure"><span class="chord" data-root="A">A</span><span class="suffix">M7</span></div>
-            <div class="measure"><span class="chord" data-root="G#">G#</span><span class="suffix">7</span></div>
-            <div class="measure"><span class="chord" data-root="C#">C#</span><span class="suffix">m7</span></div>
-            <div class="measure"><span class="chord" data-root="F#">F#</span><span class="suffix">7</span></div>
-        </div>
-        <div class="grid-row">
-            <div class="measure"><span class="chord" data-root="B">B</span><span class="suffix">7sus4</span></div>
-            <div class="measure"><span class="chord" data-root="B">B</span><span class="suffix">7sus4</span></div>
-            <div class="measure"><span class="chord" data-root="E">E</span><span class="suffix"></span></div>
-            <div class="measure"><span class="chord" data-root="E">E</span><span class="suffix"></span></div>
-        </div>
-    </div>
 </div>
 
 <script>
-    let currentShift = 0;
     const scale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const originalSongKey = "E"; // この曲の元のキー
+    let currentShift = 0;
+    let originalSongKey = "E";
 
-    function changeKey(n) {
-        currentShift += n;
-        updateDisplay();
-    }
+    // 曲のデータ
+    const songs = {
+        lovely: {
+            name: "Isn't She Lovely",
+            key: "E",
+            chords: [
+                ["C#m7", "F#7", "B7sus4", "E"],
+                ["C#m7", "F#7", "B7sus4", "E"],
+                "sep",
+                ["AM7", "G#7", "C#m7", "F#7"],
+                ["B7sus4", "B7sus4", "E", "E"]
+            ]
+        },
+        chicken: {
+            name: "The Chicken",
+            key: "Bb",
+            chords: [
+                ["Bb7", "Bb7", "Bb7", "Bb7"],
+                ["Eb7", "Eb7", "D7", "G7"],
+                "sep",
+                ["C7", "C7", "C7", "C7"],
+                ["Bb7", "Bb7", "Bb7", "Bb7"]
+            ]
+        }
+    };
 
-    function resetKey() {
+    function loadSong() {
+        const songId = document.getElementById('song-select').value;
+        const song = songs[songId];
+        originalSongKey = song.key;
         currentShift = 0;
+        renderSheet(song.chords);
         updateDisplay();
     }
+
+    function renderSheet(data) {
+        const area = document.getElementById('sheet-area');
+        area.innerHTML = "";
+        data.forEach(row => {
+            if (row === "sep") {
+                const div = document.createElement('div');
+                div.className = "separator";
+                area.appendChild(div);
+            } else {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = "grid-row";
+                row.forEach(chordStr => {
+                    const mDiv = document.createElement('div');
+                    mDiv.className = "measure";
+                    // コードを根音(Root)とそれ以外(Suffix)に分解
+                    const match = chordStr.match(/^([A-G]#?)(.*)/);
+                    if (match) {
+                        mDiv.innerHTML = `<span class="chord" data-root="${match[1]}">${match[1]}</span><span>${match[2]}</span>`;
+                    }
+                    rowDiv.appendChild(mDiv);
+                });
+                area.appendChild(rowDiv);
+            }
+        });
+    }
+
+    function changeKey(n) { currentShift += n; updateDisplay(); }
+    function resetKey() { currentShift = 0; updateDisplay(); }
 
     function updateDisplay() {
-        // 1. 曲全体のキー表示を更新
         const keyDisplay = document.getElementById('current-key-name');
-        const originalKeyIndex = scale.indexOf(originalSongKey);
+        const originalKeyIndex = scale.indexOf(originalSongKey.replace('Bb', 'A#')); // 簡易的なBb対応
         let newKeyIndex = (originalKeyIndex + currentShift) % 12;
         if (newKeyIndex < 0) newKeyIndex += 12;
         keyDisplay.innerText = scale[newKeyIndex];
 
-        // 2. 全コードの更新
         document.querySelectorAll('.chord').forEach(el => {
             const originalRoot = el.dataset.root;
-            const index = scale.indexOf(originalRoot);
-            if (index === -1) return;
-
+            let index = scale.indexOf(originalRoot);
             let newIndex = (index + currentShift) % 12;
             if (newIndex < 0) newIndex += 12;
             el.innerText = scale[newIndex];
             el.classList.add('root');
         });
     }
+
+    // 最初に1曲目を読み込む
+    loadSong();
 </script>
 </body>
 </html>
