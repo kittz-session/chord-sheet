@@ -39,6 +39,7 @@
         <select id="song-select" onchange="loadSong()">
             <option value="lovely">Isn't She Lovely</option>
             <option value="chicken">The Chicken</option>
+            <option value="georgia">Georgia On My Mind</option>
         </select>
 
         <div class="key-display">キー：<span id="current-key-name" class="key-value">-</span></div>
@@ -80,7 +81,18 @@
                 ["C7", "C7", "C7", "C7"],
                 ["Bb7", "Bb7", "Bb7", "Bb7"]
             ]
-        }
+        },
+        georgia: {
+            name: "Georgia On My Mind",
+            key: "G",
+            chords: [
+                ["G", "B7", "Em7", "C7"],
+                ["G", "E7", "A7", "D7"],
+                "sep",
+                ["G", "B7", "Em7", "C#dim"],
+                ["G", "D7", "G", "D7"]
+            ]
+        },
     };
 
     function loadSong() {
