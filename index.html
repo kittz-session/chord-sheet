@@ -5,31 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Session Chords</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f8f9fa; padding: 15px; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; }
+        body { font-family: sans-serif; text-align: center; background-color: #f8f9fa; padding: 10px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; }
         
-        /* 操作パネル */
         .controls { 
             background: white; padding: 15px; border-radius: 12px; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
             position: sticky; top: 10px; z-index: 100; margin-bottom: 20px;
         }
-        select { font-size: 18px; padding: 8px; margin-bottom: 10px; width: 80%; border-radius: 5px; }
-        
-        .key-display { font-size: 22px; font-weight: bold; margin: 10px 0; color: #2c3e50; }
-        .key-value { color: #e74c3c; }
-
-        button { font-size: 16px; padding: 10px 15px; cursor: pointer; margin: 2px; border-radius: 8px; border: none; background: #3498db; color: white; }
+        select { font-size: 18px; padding: 8px; margin-bottom: 10px; width: 90%; border-radius: 5px; }
+        .key-display { font-size: 20px; font-weight: bold; margin: 8px 0; color: #2c3e50; }
+        .key-value { color: #e74c3c; padding: 0 5px; }
+        button { font-size: 14px; padding: 10px 12px; cursor: pointer; margin: 2px; border-radius: 8px; border: none; background: #3498db; color: white; }
         button.reset { background: #e67e22; }
 
-        /* 譜面 */
-        .chord-sheet { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 5px; }
-        .measure { border-left: 2px solid #333; padding: 15px 0; font-size: 22px; font-weight: bold; position: relative; }
-        .measure:last-child { border-right: 2px solid #333; }
+        .chord-sheet { background: white; padding: 15px 5px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: left; }
         
-        .separator { height: 2px; background-color: #ddd; margin: 20px 0; }
+        .section-mark {
+            display: inline-block;
+            border: 2px solid #333;
+            padding: 2px 8px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            margin-left: 5px;
+            background-color: #eee;
+            border-radius: 4px;
+        }
+
+        /* 1行4小節の基本設定 */
+        .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 15px; }
+        
+        /* Cセクション最後用の特殊設定：4.5小節分（1:1:1:1:0.5）の比率で並べる */
+        .flex-row-c { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr; /* 最後の1つだけ幅半分 */
+            margin-bottom: 15px; 
+        }
+
+        .measure { 
+            border-left: 2px solid #333; 
+            padding: 15px 2px; 
+            font-size: 19px; 
+            font-weight: bold; 
+            min-height: 45px;
+            display: flex; justify-content: center; align-items: center;
+            gap: 12px; 
+            position: relative;
+        }
+        .measure:last-child { border-right: 2px solid #333; }
+
+        /* 2拍子小節（背景色を変えて警告） */
+        .short-measure { 
+            background-color: #fff3cd; 
+            border-right: 2px solid #333;
+        }
+        .two-beat::after {
+            content: "2B";
+            position: absolute; top: 1px; right: 2px;
+            font-size: 9px; color: #d63031; font-weight: bold;
+        }
+
+        .separator { height: 2px; background-color: #bbb; margin: 15px 0; }
+        .separator-mid { height: 6px; background-color: #2c3e50; margin: 25px 0; border-radius: 3px; }
+
         .root { color: #e74c3c; }
+        .suffix { letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -40,59 +80,61 @@
             <option value="lovely">Isn't She Lovely</option>
             <option value="chicken">The Chicken</option>
             <option value="georgia">Georgia On My Mind</option>
+            <option value="two-of-us">Just the two of us</option>
         </select>
-
         <div class="key-display">キー：<span id="current-key-name" class="key-value">-</span></div>
-
         <button onclick="changeKey(1)">＋ 上げる</button>
         <button onclick="changeKey(-1)">－ 下げる</button>
         <button class="reset" onclick="resetKey()">リセット</button>
     </div>
 
-    <div id="sheet-area" class="chord-sheet">
-        </div>
+    <div id="sheet-area" class="chord-sheet"></div>
 </div>
 
 <script>
     const scale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     let currentShift = 0;
-    let originalSongKey = "E";
+    let originalSongKey = "C";
 
-    // 曲のデータ
     const songs = {
         lovely: {
-            name: "Isn't She Lovely",
-            key: "E",
+            name: "Isn't She Lovely", key: "E",
             chords: [
-                ["C#m7", "F#7", "B7sus4", "E"],
-                ["C#m7", "F#7", "B7sus4", "E"],
-                "sep",
-                ["AM7", "G#7", "C#m7", "F#7"],
-                ["B7sus4", "B7sus4", "E", "E"]
+                {section: "A", row: ["C#m7", "F#7", "B7sus4", "E"]},
+                {row: ["C#m7", "F#7", "B7sus4", "E"]}, "sep",
+                {section: "B", row: ["AM7", "G#7", "C#m7", "F#7"]},
+                {row: ["B7sus4", "B7sus4", "E", "E"]}
             ]
         },
         chicken: {
-            name: "The Chicken",
-            key: "Bb",
+            name: "The Chicken", key: "Bb",
             chords: [
-                ["Bb7", "Bb7", "Bb7", "Bb7"],
-                ["Eb7", "Eb7", "D7", "G7"],
-                "sep",
-                ["C7", "C7", "C7", "C7"],
-                ["Bb7", "Bb7", "Bb7", "Bb7"]
+                {section: "Main", row: ["Bb7", "Bb7", "Bb7", "Bb7"]},
+                {row: ["Eb7", "Eb7", "D7", "G7"]}, "sep",
+                {row: ["C7", "C7", "C7", "C7"]},
+                {row: ["Bb7", "Bb7", "Bb7", "Bb7"]}
             ]
         },
         georgia: {
-            name: "Georgia On My Mind",
-            key: "G",
+            name: "Georgia On My Mind", key: "G",
             chords: [
-                ["G", "B7", "Em7", "C7"],
-                ["G", "E7", "A7", "D7"],
-                "sep",
-                ["G", "B7", "Em7", "C#dim"],
-                ["G", "D7", "G", "D7"]
+                {section: "A", row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "F7 E7", "A7 D7"]}, "sep",
+                {row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "G C7", "G B7"]}, "sep-mid",
+                {section: "B", row: ["Em Em6", "Em6 Em6", "Em Em6", "Em7 A7"]}, {row: ["Em Em6", "Em F#7", "Bm7 Bb7", "A7 D7"]}, "sep",
+                {section: "A", row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "F7 E7", "A7 D7"]}
             ]
         },
+        "two-of-us": {
+            name: "Just the two of us", key: "Ab",
+            chords: [
+                {section: "A", row: ["C#M7 C7", "Fm7 D#m7 G#7", "C#M7 C7", "Fm7"]},
+                {row: ["C#M7 C7", "Fm7 D#m7 G#7", "C#M7 C7", "Fm7"]}, "sep",
+                {section: "B", row: ["C#M7 C7", "Fm7 Em7 D#m7 G#7", "C#M7 C7", "Fm7"]},
+                {row: ["C#M7 C7", "Fm7 Em7 D#m7 G#7", "C#M7 C7", "Fm7"]}, "sep",
+                {section: "C", row: ["C#M7 C7", "BM7 BbM7", "AM7 AbM7", "DbM7 Gb6"]},
+                {isCfinal: true, row: ["C#M7 C7", "BM7 BbM7", "AM7 AbM7", "DbM7 Gb6", {chord: "F#6", beats: 2}]}
+            ]
+        }
     };
 
     function loadSong() {
@@ -107,22 +149,42 @@
     function renderSheet(data) {
         const area = document.getElementById('sheet-area');
         area.innerHTML = "";
-        data.forEach(row => {
-            if (row === "sep") {
+        data.forEach(item => {
+            if (typeof item === "string") {
                 const div = document.createElement('div');
-                div.className = "separator";
+                div.className = (item === "sep-mid") ? "separator-mid" : "separator";
                 area.appendChild(div);
             } else {
+                if (item.section) {
+                    const sec = document.createElement('div');
+                    sec.className = "section-mark";
+                    sec.innerText = item.section;
+                    area.appendChild(sec);
+                }
                 const rowDiv = document.createElement('div');
-                rowDiv.className = "grid-row";
-                row.forEach(chordStr => {
+                rowDiv.className = item.isCfinal ? "flex-row-c" : "grid-row";
+                
+                item.row.forEach(measureData => {
                     const mDiv = document.createElement('div');
-                    mDiv.className = "measure";
-                    // コードを根音(Root)とそれ以外(Suffix)に分解
-                    const match = chordStr.match(/^([A-G]#?)(.*)/);
-                    if (match) {
-                        mDiv.innerHTML = `<span class="chord" data-root="${match[1]}">${match[1]}</span><span>${match[2]}</span>`;
+                    let text = "";
+                    if (typeof measureData === "string") {
+                        text = measureData;
+                        mDiv.className = "measure";
+                    } else {
+                        text = measureData.chord;
+                        mDiv.className = "measure short-measure two-beat";
                     }
+
+                    const parts = text.split(/\s+/);
+                    parts.forEach((part) => {
+                        const match = part.match(/^([A-G][#b]?)(.*)/);
+                        if (match) {
+                            const rootCalc = match[1].replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
+                            mDiv.innerHTML += `<span><span class="chord" data-root="${rootCalc}">${match[1]}</span><span class="suffix">${match[2]}</span></span>`;
+                        } else {
+                            mDiv.innerHTML += `<span>${part}</span>`;
+                        }
+                    });
                     rowDiv.appendChild(mDiv);
                 });
                 area.appendChild(rowDiv);
@@ -135,22 +197,20 @@
 
     function updateDisplay() {
         const keyDisplay = document.getElementById('current-key-name');
-        const originalKeyIndex = scale.indexOf(originalSongKey.replace('Bb', 'A#')); // 簡易的なBb対応
-        let newKeyIndex = (originalKeyIndex + currentShift) % 12;
+        const rootCalc = originalSongKey.replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
+        let newKeyIndex = (scale.indexOf(rootCalc) + currentShift) % 12;
         if (newKeyIndex < 0) newKeyIndex += 12;
         keyDisplay.innerText = scale[newKeyIndex];
 
         document.querySelectorAll('.chord').forEach(el => {
-            const originalRoot = el.dataset.root;
-            let index = scale.indexOf(originalRoot);
-            let newIndex = (index + currentShift) % 12;
-            if (newIndex < 0) newIndex += 12;
-            el.innerText = scale[newIndex];
+            const index = scale.indexOf(el.dataset.root);
+            if (index === -1) return;
+            let newIdx = (index + currentShift) % 12;
+            if (newIdx < 0) newIdx += 12;
+            el.innerText = scale[newIdx];
             el.classList.add('root');
         });
     }
-
-    // 最初に1曲目を読み込む
     loadSong();
 </script>
 </body>
