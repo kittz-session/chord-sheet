@@ -9,14 +9,14 @@
         .container { max-width: 900px; margin: 0 auto; }
         
         .controls { 
-            background: white; padding: 15px; border-radius: 12px; 
+            background: white; padding: 10px; border-radius: 12px; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-            position: sticky; top: 10px; z-index: 100; margin-bottom: 20px;
+            position: sticky; top: 10px; z-index: 100; margin-bottom: 15px;
         }
-        select { font-size: 18px; padding: 8px; margin-bottom: 10px; width: 90%; border-radius: 5px; }
-        .key-display { font-size: 20px; font-weight: bold; margin: 8px 0; color: #2c3e50; }
+        select { font-size: 16px; padding: 8px; margin-bottom: 8px; width: 95%; border-radius: 5px; }
+        .key-display { font-size: 18px; font-weight: bold; margin: 5px 0; color: #2c3e50; }
         .key-value { color: #e74c3c; padding: 0 5px; }
-        button { font-size: 14px; padding: 10px 12px; cursor: pointer; margin: 2px; border-radius: 8px; border: none; background: #3498db; color: white; }
+        button { font-size: 13px; padding: 8px 10px; cursor: pointer; margin: 2px; border-radius: 8px; border: none; background: #3498db; color: white; }
         button.reset { background: #e67e22; }
 
         .chord-sheet { background: white; padding: 15px 5px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: left; }
@@ -24,52 +24,56 @@
         .section-mark {
             display: inline-block;
             border: 2px solid #333;
-            padding: 2px 8px;
+            padding: 1px 6px;
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 5px;
-            margin-left: 5px;
+            margin: 10px 0 5px 5px;
             background-color: #eee;
             border-radius: 4px;
         }
 
         /* 1行4小節の基本設定 */
-        .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 15px; }
+        .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 10px; }
         
-        /* Cセクション最後用の特殊設定：4.5小節分（1:1:1:1:0.5）の比率で並べる */
+        /* Cセクション最後：1:1:1:1:0.5の比率 */
         .flex-row-c { 
             display: grid; 
-            grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr; /* 最後の1つだけ幅半分 */
-            margin-bottom: 15px; 
+            grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr; 
+            margin-bottom: 10px; 
         }
 
         .measure { 
             border-left: 2px solid #333; 
-            padding: 15px 2px; 
-            font-size: 19px; 
+            padding: 12px 1px; 
+            font-size: 17px; /* 少し小さめに設定 */
             font-weight: bold; 
-            min-height: 45px;
+            min-height: 40px;
             display: flex; justify-content: center; align-items: center;
-            gap: 12px; 
+            gap: 6px; 
             position: relative;
+            overflow: hidden; /* はみ出し防止 */
         }
         .measure:last-child { border-right: 2px solid #333; }
 
-        /* 2拍子小節（背景色を変えて警告） */
-        .short-measure { 
-            background-color: #fff3cd; 
-            border-right: 2px solid #333;
+        /* スマホ縦画面用の微調整 */
+        @media (max-width: 480px) {
+            .measure { font-size: 14px; gap: 4px; padding: 10px 0; }
+            .section-mark { font-size: 12px; }
+            button { padding: 6px 8px; font-size: 12px; }
         }
+
+        .short-measure { background-color: #fff3cd; border-right: 2px solid #333; }
         .two-beat::after {
             content: "2B";
-            position: absolute; top: 1px; right: 2px;
-            font-size: 9px; color: #d63031; font-weight: bold;
+            position: absolute; top: 1px; right: 1px;
+            font-size: 8px; color: #d63031; font-weight: bold;
         }
 
-        .separator { height: 2px; background-color: #bbb; margin: 15px 0; }
-        .separator-mid { height: 6px; background-color: #2c3e50; margin: 25px 0; border-radius: 3px; }
+        .separator { height: 1px; background-color: #bbb; margin: 10px 0; }
+        .separator-mid { height: 4px; background-color: #2c3e50; margin: 20px 0; border-radius: 2px; }
 
         .root { color: #e74c3c; }
-        .suffix { letter-spacing: 0.5px; }
+        .suffix { letter-spacing: 0px; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -87,7 +91,6 @@
         <button onclick="changeKey(-1)">－ 下げる</button>
         <button class="reset" onclick="resetKey()">リセット</button>
     </div>
-
     <div id="sheet-area" class="chord-sheet"></div>
 </div>
 
