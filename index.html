@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Session Chords</title>
+    <title>Professional Session Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         body { font-family: sans-serif; text-align: center; background-color: #f8f9fa; padding: 10px; color: #333; }
         .container { max-width: 900px; margin: 0 auto; }
-        
         .controls { 
             background: white; padding: 10px; border-radius: 12px; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
@@ -16,64 +16,28 @@
         select { font-size: 16px; padding: 8px; margin-bottom: 8px; width: 95%; border-radius: 5px; }
         .key-display { font-size: 18px; font-weight: bold; margin: 5px 0; color: #2c3e50; }
         .key-value { color: #e74c3c; padding: 0 5px; }
+        .player-controls { margin: 10px 0; padding: 10px; border-top: 1px solid #eee; }
+        .play-btn { background: #27ae60 !important; font-weight: bold; width: 140px; }
+        .stop-btn { background: #c0392b !important; }
+        .status-msg { font-size: 12px; color: #888; margin-top: 5px; }
         button { font-size: 13px; padding: 8px 10px; cursor: pointer; margin: 2px; border-radius: 8px; border: none; background: #3498db; color: white; }
         button.reset { background: #e67e22; }
-
         .chord-sheet { background: white; padding: 15px 5px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: left; }
-        
-        .section-mark {
-            display: inline-block;
-            border: 2px solid #333;
-            padding: 1px 6px;
-            font-size: 14px;
-            font-weight: bold;
-            margin: 10px 0 5px 5px;
-            background-color: #eee;
-            border-radius: 4px;
-        }
-
-        /* 1行4小節の基本設定 */
+        .section-mark { display: inline-block; border: 2px solid #333; padding: 1px 6px; font-size: 14px; font-weight: bold; margin: 10px 0 5px 5px; background-color: #eee; border-radius: 4px; }
         .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 10px; }
-        
-        /* Cセクション最後：1:1:1:1:0.5の比率 */
-        .flex-row-c { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr; 
-            margin-bottom: 10px; 
-        }
-
+        .flex-row-c { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr; margin-bottom: 10px; }
         .measure { 
-            border-left: 2px solid #333; 
-            padding: 12px 1px; 
-            font-size: 17px; /* 少し小さめに設定 */
-            font-weight: bold; 
-            min-height: 40px;
-            display: flex; justify-content: center; align-items: center;
-            gap: 6px; 
-            position: relative;
-            overflow: hidden; /* はみ出し防止 */
+            border-left: 2px solid #333; padding: 12px 1px; font-size: 17px; font-weight: bold; min-height: 40px;
+            display: flex; justify-content: center; align-items: center; gap: 6px; position: relative;
         }
         .measure:last-child { border-right: 2px solid #333; }
-
-        /* スマホ縦画面用の微調整 */
-        @media (max-width: 480px) {
-            .measure { font-size: 14px; gap: 4px; padding: 10px 0; }
-            .section-mark { font-size: 12px; }
-            button { padding: 6px 8px; font-size: 12px; }
-        }
-
+        .active-measure { background-color: #d1ecf1 !important; transition: background 0.1s; }
+        .root { color: #e74c3c; }
+        @media (max-width: 480px) { .measure { font-size: 14px; } }
         .short-measure { background-color: #fff3cd; border-right: 2px solid #333; }
-        .two-beat::after {
-            content: "2B";
-            position: absolute; top: 1px; right: 1px;
-            font-size: 8px; color: #d63031; font-weight: bold;
-        }
-
+        .two-beat::after { content: "2B"; position: absolute; top: 1px; right: 1px; font-size: 8px; color: #d63031; font-weight: bold; }
         .separator { height: 1px; background-color: #bbb; margin: 10px 0; }
         .separator-mid { height: 4px; background-color: #2c3e50; margin: 20px 0; border-radius: 2px; }
-
-        .root { color: #e74c3c; }
-        .suffix { letter-spacing: 0px; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -81,15 +45,22 @@
 <div class="container">
     <div class="controls">
         <select id="song-select" onchange="loadSong()">
+            <option value="georgia">Georgia On My Mind</option>
             <option value="lovely">Isn't She Lovely</option>
             <option value="chicken">The Chicken</option>
-            <option value="georgia">Georgia On My Mind</option>
             <option value="two-of-us">Just the two of us</option>
         </select>
         <div class="key-display">キー：<span id="current-key-name" class="key-value">-</span></div>
         <button onclick="changeKey(1)">＋ 上げる</button>
         <button onclick="changeKey(-1)">－ 下げる</button>
         <button class="reset" onclick="resetKey()">リセット</button>
+
+        <div class="player-controls">
+            BPM: <input type="number" id="bpm" style="width:50px" value="70">
+            <button id="play-btn" class="play-btn" onclick="togglePlay()" disabled>音源読込中...</button>
+            <button class="stop-btn" onclick="stopAudio()">ストップ</button>
+            <div id="status" class="status-msg">高品質ピアノ音源をダウンロード中...</div>
+        </div>
     </div>
     <div id="sheet-area" class="chord-sheet"></div>
 </div>
@@ -97,52 +68,137 @@
 <script>
     const scale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     let currentShift = 0;
-    let originalSongKey = "C";
+    let originalSongKey = "G";
+    let isPlaying = false;
+
+    // --- Tone.js エフェクト設定 (リバーブ) ---
+    const reverb = new Tone.Reverb({
+        decay: 4,      // コンサートホールのような長い残響
+        wet: 0.4       // 残響の強さ
+    }).toDestination();
+
+    // --- Tone.js サンプラーの設定 ---
+    const sampler = new Tone.Sampler({
+        urls: {
+            A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3", A1: "A1.mp3",
+            C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3", A2: "A2.mp3",
+            C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3", A3: "A3.mp3",
+            C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", A4: "A4.mp3",
+            C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3", A5: "A5.mp3",
+            C6: "C6.mp3"
+        },
+        release: 1.5,
+        baseUrl: "https://tonejs.github.io/audio/salamander/",
+        onload: () => {
+            document.getElementById('play-btn').disabled = false;
+            document.getElementById('play-btn').innerText = "演奏スタート";
+            document.getElementById('status').innerText = "Rechord風ピアノの準備完了！";
+        }
+    }).connect(reverb);
 
     const songs = {
-        lovely: {
-            name: "Isn't She Lovely", key: "E",
-            chords: [
-                {section: "A", row: ["C#m7", "F#7", "B7sus4", "E"]},
-                {row: ["C#m7", "F#7", "B7sus4", "E"]}, "sep",
-                {section: "B", row: ["AM7", "G#7", "C#m7", "F#7"]},
-                {row: ["B7sus4", "B7sus4", "E", "E"]}
-            ]
-        },
-        chicken: {
-            name: "The Chicken", key: "Bb",
-            chords: [
-                {section: "Main", row: ["Bb7", "Bb7", "Bb7", "Bb7"]},
-                {row: ["Eb7", "Eb7", "D7", "G7"]}, "sep",
-                {row: ["C7", "C7", "C7", "C7"]},
-                {row: ["Bb7", "Bb7", "Bb7", "Bb7"]}
-            ]
-        },
-        georgia: {
-            name: "Georgia On My Mind", key: "G",
-            chords: [
-                {section: "A", row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "F7 E7", "A7 D7"]}, "sep",
-                {row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "G C7", "G B7"]}, "sep-mid",
-                {section: "B", row: ["Em Em6", "Em6 Em6", "Em Em6", "Em7 A7"]}, {row: ["Em Em6", "Em F#7", "Bm7 Bb7", "A7 D7"]}, "sep",
-                {section: "A", row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "F7 E7", "A7 D7"]}
-            ]
-        },
-        "two-of-us": {
-            name: "Just the two of us", key: "Ab",
-            chords: [
-                {section: "A", row: ["C#M7 C7", "Fm7 D#m7 G#7", "C#M7 C7", "Fm7"]},
-                {row: ["C#M7 C7", "Fm7 D#m7 G#7", "C#M7 C7", "Fm7"]}, "sep",
-                {section: "B", row: ["C#M7 C7", "Fm7 Em7 D#m7 G#7", "C#M7 C7", "Fm7"]},
-                {row: ["C#M7 C7", "Fm7 Em7 D#m7 G#7", "C#M7 C7", "Fm7"]}, "sep",
-                {section: "C", row: ["C#M7 C7", "BM7 BbM7", "AM7 AbM7", "DbM7 Gb6"]},
-                {isCfinal: true, row: ["C#M7 C7", "BM7 BbM7", "AM7 AbM7", "DbM7 Gb6", {chord: "F#6", beats: 2}]}
-            ]
-        }
+        georgia: { key: "G", chords: [
+            {section: "A", row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "F7 E7", "A7 D7"]}, "sep",
+            {row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "G C7", "G B7"]}, "sep-mid",
+            {section: "B", row: ["Em Em6", "Em6 Em6", "Em Em6", "Em7 A7"]}, {row: ["Em Em6", "Em F#7", "Bm7 Bb7", "A7 D7"]}, "sep",
+            {section: "A", row: ["G", "B7", "Em G7", "C C#dim7"]}, {row: ["G E7", "A7 D7", "F7 E7", "A7 D7"]}
+        ]},
+        lovely: { key: "E", chords: [
+            {section: "A", row: ["C#m7", "F#7", "B7sus4", "E"]}, {row: ["C#m7", "F#7", "B7sus4", "E"]}, "sep",
+            {section: "B", row: ["AM7", "G#7", "C#m7", "F#7"]}, {row: ["B7sus4", "B7sus4", "E", "E"]}
+        ]},
+        chicken: { key: "Bb", chords: [
+            {section: "Main", row: ["Bb7", "Bb7", "Bb7", "Bb7"]}, {row: ["Eb7", "Eb7", "D7", "G7"]}, "sep",
+            {row: ["C7", "C7", "C7", "C7"]}, {row: ["Bb7", "Bb7", "Bb7", "Bb7"]}
+        ]},
+        "two-of-us": { key: "Ab", chords: [
+            {section: "A", row: ["C#M7 C7", "Fm7 D#m7 G#7", "C#M7 C7", "Fm7"]}, "sep",
+            {section: "B", row: ["C#M7 C7", "Fm7 Em7 D#m7 G#7", "C#M7 C7", "Fm7"]}, "sep",
+            {section: "C", row: ["C#M7 C7", "BM7 BbM7", "AM7 AbM7", "DbM7 Gb6"]},
+            {isCfinal: true, row: ["C#M7 C7", "BM7 BbM7", "AM7 AbM7", "DbM7 Gb6", {chord: "F#6", beats: 2}]}
+        ]}
     };
+
+    function getChordNotes(chordText) {
+        const rootMatch = chordText.match(/^([A-G][#b]?)/);
+        if (!rootMatch) return [];
+        let root = rootMatch[1].replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
+        
+        let idx = (scale.indexOf(root) + currentShift) % 12;
+        if (idx < 0) idx += 12;
+        let rootIdx = idx;
+
+        const isMinor = chordText.includes('m') && !chordText.includes('M');
+        const is7th = chordText.includes('7');
+        const isMajor7 = chordText.includes('M7');
+        const isDim = chordText.includes('dim');
+
+        let notes = [];
+        // 低音ルート（どっしりさせる）
+        notes.push(scale[rootIdx] + "2"); 
+        // 5度（dimなら減5度）
+        notes.push(scale[(rootIdx + (isDim ? 6 : 7)) % 12] + "3");
+        // 3度
+        notes.push(scale[(rootIdx + (isMinor || isDim ? 3 : 4)) % 12] + "4");
+        // 7度
+        if (is7th) {
+            let sInterval = isMajor7 ? 11 : (isDim ? 9 : 10);
+            notes.push(scale[(rootIdx + sInterval) % 12] + "4");
+        }
+        return notes;
+    }
+
+    function togglePlay() {
+        if (isPlaying) { stopAudio(); return; }
+        Tone.start();
+        isPlaying = true;
+        document.getElementById('play-btn').innerText = "一時停止";
+        const bpm = document.getElementById('bpm').value;
+        Tone.Transport.bpm.value = bpm;
+        Tone.Transport.cancel();
+
+        const allMeasures = document.querySelectorAll('.measure');
+        let currentTime = 0;
+
+        allMeasures.forEach((mDiv) => {
+            const chords = Array.from(mDiv.querySelectorAll('.chord')).map(el => el.innerText);
+            const isShort = mDiv.classList.contains('short-measure');
+            const measureDur = isShort ? "2n" : "1n";
+            
+            Tone.Transport.schedule((time) => {
+                Tone.Draw.schedule(() => {
+                    allMeasures.forEach(m => m.classList.remove('active-measure'));
+                    mDiv.classList.add('active-measure');
+                }, time);
+            }, currentTime);
+
+            if (chords.length === 1) {
+                Tone.Transport.schedule((time) => {
+                    sampler.triggerAttackRelease(getChordNotes(chords[0]), "2n", time);
+                }, currentTime);
+            } else if (chords.length === 2) {
+                Tone.Transport.schedule((time) => {
+                    sampler.triggerAttackRelease(getChordNotes(chords[0]), "4n", time);
+                }, currentTime);
+                Tone.Transport.schedule((time) => {
+                    sampler.triggerAttackRelease(getChordNotes(chords[1]), "4n", time);
+                }, currentTime + (isShort ? Tone.Time("4n").toSeconds() : Tone.Time("2n").toSeconds()));
+            }
+            currentTime += Tone.Time(measureDur).toSeconds();
+        });
+        Tone.Transport.start();
+    }
+
+    function stopAudio() {
+        isPlaying = false;
+        Tone.Transport.stop();
+        document.getElementById('play-btn').innerText = "演奏スタート";
+        document.querySelectorAll('.measure').forEach(m => m.classList.remove('active-measure'));
+    }
 
     function loadSong() {
         const songId = document.getElementById('song-select').value;
-        const song = songs[songId];
+        const song = songs[songId] || songs['georgia'];
         originalSongKey = song.key;
         currentShift = 0;
         renderSheet(song.chords);
@@ -166,26 +222,15 @@
                 }
                 const rowDiv = document.createElement('div');
                 rowDiv.className = item.isCfinal ? "flex-row-c" : "grid-row";
-                
                 item.row.forEach(measureData => {
                     const mDiv = document.createElement('div');
-                    let text = "";
-                    if (typeof measureData === "string") {
-                        text = measureData;
-                        mDiv.className = "measure";
-                    } else {
-                        text = measureData.chord;
-                        mDiv.className = "measure short-measure two-beat";
-                    }
-
-                    const parts = text.split(/\s+/);
-                    parts.forEach((part) => {
+                    let text = typeof measureData === "string" ? measureData : measureData.chord;
+                    mDiv.className = typeof measureData === "string" ? "measure" : "measure short-measure two-beat";
+                    text.split(/\s+/).forEach(part => {
                         const match = part.match(/^([A-G][#b]?)(.*)/);
                         if (match) {
                             const rootCalc = match[1].replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
                             mDiv.innerHTML += `<span><span class="chord" data-root="${rootCalc}">${match[1]}</span><span class="suffix">${match[2]}</span></span>`;
-                        } else {
-                            mDiv.innerHTML += `<span>${part}</span>`;
                         }
                     });
                     rowDiv.appendChild(mDiv);
@@ -197,20 +242,17 @@
 
     function changeKey(n) { currentShift += n; updateDisplay(); }
     function resetKey() { currentShift = 0; updateDisplay(); }
-
     function updateDisplay() {
         const keyDisplay = document.getElementById('current-key-name');
         const rootCalc = originalSongKey.replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
-        let newKeyIndex = (scale.indexOf(rootCalc) + currentShift) % 12;
-        if (newKeyIndex < 0) newKeyIndex += 12;
-        keyDisplay.innerText = scale[newKeyIndex];
-
+        let newIdx = (scale.indexOf(rootCalc) + currentShift) % 12;
+        if (newIdx < 0) newIdx += 12;
+        keyDisplay.innerText = scale[newIdx];
         document.querySelectorAll('.chord').forEach(el => {
-            const index = scale.indexOf(el.dataset.root);
-            if (index === -1) return;
-            let newIdx = (index + currentShift) % 12;
-            if (newIdx < 0) newIdx += 12;
-            el.innerText = scale[newIdx];
+            let index = scale.indexOf(el.dataset.root);
+            let nIdx = (index + currentShift) % 12;
+            if (nIdx < 0) nIdx += 12;
+            el.innerText = scale[nIdx];
             el.classList.add('root');
         });
     }
