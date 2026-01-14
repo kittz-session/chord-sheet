@@ -6,38 +6,64 @@
     <title>Professional Session Player</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f8f9fa; padding: 10px; color: #333; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; text-align: center; background-color: #f0f2f5; padding: 10px; color: #333; }
         .container { max-width: 900px; margin: 0 auto; }
         .controls { 
-            background: white; padding: 10px; border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-            position: sticky; top: 10px; z-index: 100; margin-bottom: 15px;
+            background: white; padding: 15px; border-radius: 15px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            position: sticky; top: 10px; z-index: 100; margin-bottom: 20px;
         }
-        select { font-size: 16px; padding: 8px; margin-bottom: 8px; width: 95%; border-radius: 5px; }
-        .key-display { font-size: 18px; font-weight: bold; margin: 5px 0; color: #2c3e50; }
+        select { font-size: 18px; padding: 10px; margin-bottom: 10px; width: 95%; border-radius: 8px; border: 1px solid #ccc; }
+        .key-display { font-size: 20px; font-weight: bold; margin: 5px 0; color: #2c3e50; }
         .key-value { color: #e74c3c; padding: 0 5px; }
-        .player-controls { margin: 10px 0; padding: 10px; border-top: 1px solid #eee; }
-        .play-btn { background: #27ae60 !important; font-weight: bold; width: 140px; }
+        .player-controls { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        
+        button { font-size: 14px; padding: 10px 15px; cursor: pointer; margin: 3px; border-radius: 10px; border: none; background: #3498db; color: white; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+        .play-btn { background: #27ae60 !important; font-weight: bold; width: 160px; }
         .stop-btn { background: #c0392b !important; }
-        .status-msg { font-size: 12px; color: #888; margin-top: 5px; }
-        button { font-size: 13px; padding: 8px 10px; cursor: pointer; margin: 2px; border-radius: 8px; border: none; background: #3498db; color: white; }
-        button.reset { background: #e67e22; }
-        .chord-sheet { background: white; padding: 15px 5px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: left; }
-        .section-mark { display: inline-block; border: 2px solid #333; padding: 1px 6px; font-size: 14px; font-weight: bold; margin: 10px 0 5px 5px; background-color: #eee; border-radius: 4px; }
-        .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 10px; }
-        .flex-row-c { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr; margin-bottom: 10px; }
+        .reset { background: #e67e22 !important; }
+
+        .chord-sheet { background: white; padding: 20px 10px; border-radius: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); text-align: left; }
+        .section-mark { display: inline-block; border: 2px solid #333; padding: 2px 10px; font-size: 16px; font-weight: bold; margin: 15px 0 8px 5px; background-color: #333; color: white; border-radius: 4px; }
+        
+        .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 12px; }
+        .flex-row-c { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr; margin-bottom: 12px; }
+
         .measure { 
-            border-left: 2px solid #333; padding: 12px 1px; font-size: 17px; font-weight: bold; min-height: 40px;
-            display: flex; justify-content: center; align-items: center; gap: 6px; position: relative;
+            border-left: 2px solid #444; padding: 20px 2px; min-height: 60px;
+            display: flex; justify-content: center; align-items: baseline; gap: 4px; position: relative;
+            background-color: #fff;
         }
-        .measure:last-child { border-right: 2px solid #333; }
-        .active-measure { background-color: #d1ecf1 !important; transition: background 0.1s; }
-        .root { color: #e74c3c; }
-        @media (max-width: 480px) { .measure { font-size: 14px; } }
-        .short-measure { background-color: #fff3cd; border-right: 2px solid #333; }
-        .two-beat::after { content: "2B"; position: absolute; top: 1px; right: 1px; font-size: 8px; color: #d63031; font-weight: bold; }
-        .separator { height: 1px; background-color: #bbb; margin: 10px 0; }
-        .separator-mid { height: 4px; background-color: #2c3e50; margin: 20px 0; border-radius: 2px; }
+        .measure:last-child { border-right: 2px solid #444; }
+        
+        /* ルート音（音階）のスタイル修正 */
+        .root { 
+            font-size: 36px; /* 視認性のため少しだけ大きく */
+            font-weight: 400; /* 太字(900)から標準(400)に変更 */
+            color: #e74c3c;
+            line-height: 1;
+        }
+        /* 属性（m7, dimなど）のスタイル修正 */
+        .suffix { 
+            font-size: 20px; 
+            font-weight: 500; /* 少しだけ存在感を出すために中太に */
+            color: #444;
+            margin-left: 1px;
+        }
+
+        .active-measure { background-color: #e3f2fd !important; box-shadow: inset 0 0 10px rgba(52, 152, 219, 0.3); }
+        .short-measure { background-color: #fff9e6; border-right: 2px solid #444; }
+        .two-beat::after { content: "2B"; position: absolute; top: 2px; right: 4px; font-size: 10px; color: #d63031; font-weight: bold; }
+        
+        .separator { height: 1px; background-color: #ddd; margin: 15px 0; }
+        .separator-mid { height: 5px; background-color: #2c3e50; margin: 25px 0; border-radius: 3px; }
+
+        @media (max-width: 480px) {
+            .root { font-size: 24px; }
+            .suffix { font-size: 15px; }
+            .measure { padding: 15px 1px; min-height: 50px; }
+        }
     </style>
 </head>
 <body>
@@ -56,28 +82,24 @@
         <button class="reset" onclick="resetKey()">リセット</button>
 
         <div class="player-controls">
-            BPM: <input type="number" id="bpm" style="width:50px" value="70">
-            <button id="play-btn" class="play-btn" onclick="togglePlay()" disabled>音源読込中...</button>
+            BPM: <input type="number" id="bpm" style="width:60px; font-size: 16px;" value="70">
+            <button id="play-btn" class="play-btn" onclick="togglePlay()" disabled>読込中...</button>
             <button class="stop-btn" onclick="stopAudio()">ストップ</button>
-            <div id="status" class="status-msg">高品質ピアノ音源をダウンロード中...</div>
+            <div id="status" style="font-size: 12px; color: #888; margin-top: 8px;">音源をダウンロード中...</div>
         </div>
     </div>
     <div id="sheet-area" class="chord-sheet"></div>
 </div>
 
 <script>
-    const scale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const displayScale = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+    const calcScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    
     let currentShift = 0;
     let originalSongKey = "G";
     let isPlaying = false;
 
-    // --- Tone.js エフェクト設定 (リバーブ) ---
-    const reverb = new Tone.Reverb({
-        decay: 4,      // コンサートホールのような長い残響
-        wet: 0.4       // 残響の強さ
-    }).toDestination();
-
-    // --- Tone.js サンプラーの設定 ---
+    const reverb = new Tone.Reverb({ decay: 4, wet: 0.4 }).toDestination();
     const sampler = new Tone.Sampler({
         urls: {
             A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3", A1: "A1.mp3",
@@ -92,7 +114,7 @@
         onload: () => {
             document.getElementById('play-btn').disabled = false;
             document.getElementById('play-btn').innerText = "演奏スタート";
-            document.getElementById('status').innerText = "Rechord風ピアノの準備完了！";
+            document.getElementById('status').innerText = "準備完了";
         }
     }).connect(reverb);
 
@@ -123,8 +145,7 @@
         const rootMatch = chordText.match(/^([A-G][#b]?)/);
         if (!rootMatch) return [];
         let root = rootMatch[1].replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
-        
-        let idx = (scale.indexOf(root) + currentShift) % 12;
+        let idx = (calcScale.indexOf(root) + currentShift) % 12;
         if (idx < 0) idx += 12;
         let rootIdx = idx;
 
@@ -133,18 +154,8 @@
         const isMajor7 = chordText.includes('M7');
         const isDim = chordText.includes('dim');
 
-        let notes = [];
-        // 低音ルート（どっしりさせる）
-        notes.push(scale[rootIdx] + "2"); 
-        // 5度（dimなら減5度）
-        notes.push(scale[(rootIdx + (isDim ? 6 : 7)) % 12] + "3");
-        // 3度
-        notes.push(scale[(rootIdx + (isMinor || isDim ? 3 : 4)) % 12] + "4");
-        // 7度
-        if (is7th) {
-            let sInterval = isMajor7 ? 11 : (isDim ? 9 : 10);
-            notes.push(scale[(rootIdx + sInterval) % 12] + "4");
-        }
+        let notes = [calcScale[rootIdx] + "2", calcScale[(rootIdx + (isDim ? 6 : 7)) % 12] + "3", calcScale[(rootIdx + (isMinor || isDim ? 3 : 4)) % 12] + "4"];
+        if (is7th) notes.push(calcScale[(rootIdx + (isMajor7 ? 11 : (isDim ? 9 : 10))) % 12] + "4");
         return notes;
     }
 
@@ -153,15 +164,14 @@
         Tone.start();
         isPlaying = true;
         document.getElementById('play-btn').innerText = "一時停止";
-        const bpm = document.getElementById('bpm').value;
-        Tone.Transport.bpm.value = bpm;
+        Tone.Transport.bpm.value = document.getElementById('bpm').value;
         Tone.Transport.cancel();
 
         const allMeasures = document.querySelectorAll('.measure');
         let currentTime = 0;
 
         allMeasures.forEach((mDiv) => {
-            const chords = Array.from(mDiv.querySelectorAll('.chord')).map(el => el.innerText);
+            const chords = Array.from(mDiv.querySelectorAll('.chord-box')).map(el => el.dataset.fullChord);
             const isShort = mDiv.classList.contains('short-measure');
             const measureDur = isShort ? "2n" : "1n";
             
@@ -173,16 +183,10 @@
             }, currentTime);
 
             if (chords.length === 1) {
-                Tone.Transport.schedule((time) => {
-                    sampler.triggerAttackRelease(getChordNotes(chords[0]), "2n", time);
-                }, currentTime);
+                Tone.Transport.schedule((time) => { sampler.triggerAttackRelease(getChordNotes(chords[0]), "2n", time); }, currentTime);
             } else if (chords.length === 2) {
-                Tone.Transport.schedule((time) => {
-                    sampler.triggerAttackRelease(getChordNotes(chords[0]), "4n", time);
-                }, currentTime);
-                Tone.Transport.schedule((time) => {
-                    sampler.triggerAttackRelease(getChordNotes(chords[1]), "4n", time);
-                }, currentTime + (isShort ? Tone.Time("4n").toSeconds() : Tone.Time("2n").toSeconds()));
+                Tone.Transport.schedule((time) => { sampler.triggerAttackRelease(getChordNotes(chords[0]), "4n", time); }, currentTime);
+                Tone.Transport.schedule((time) => { sampler.triggerAttackRelease(getChordNotes(chords[1]), "4n", time); }, currentTime + (isShort ? Tone.Time("4n").toSeconds() : Tone.Time("2n").toSeconds()));
             }
             currentTime += Tone.Time(measureDur).toSeconds();
         });
@@ -226,11 +230,12 @@
                     const mDiv = document.createElement('div');
                     let text = typeof measureData === "string" ? measureData : measureData.chord;
                     mDiv.className = typeof measureData === "string" ? "measure" : "measure short-measure two-beat";
+                    
                     text.split(/\s+/).forEach(part => {
                         const match = part.match(/^([A-G][#b]?)(.*)/);
                         if (match) {
                             const rootCalc = match[1].replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
-                            mDiv.innerHTML += `<span><span class="chord" data-root="${rootCalc}">${match[1]}</span><span class="suffix">${match[2]}</span></span>`;
+                            mDiv.innerHTML += `<span class="chord-box" data-root="${rootCalc}" data-full-chord="${part}"><span class="root"></span><span class="suffix">${match[2]}</span></span>`;
                         }
                     });
                     rowDiv.appendChild(mDiv);
@@ -242,18 +247,19 @@
 
     function changeKey(n) { currentShift += n; updateDisplay(); }
     function resetKey() { currentShift = 0; updateDisplay(); }
+    
     function updateDisplay() {
         const keyDisplay = document.getElementById('current-key-name');
         const rootCalc = originalSongKey.replace('Bb','A#').replace('Eb','D#').replace('Ab','G#').replace('Db','C#').replace('Gb','F#');
-        let newIdx = (scale.indexOf(rootCalc) + currentShift) % 12;
-        if (newIdx < 0) newIdx += 12;
-        keyDisplay.innerText = scale[newIdx];
-        document.querySelectorAll('.chord').forEach(el => {
-            let index = scale.indexOf(el.dataset.root);
+        let newKeyIdx = (calcScale.indexOf(rootCalc) + currentShift) % 12;
+        if (newKeyIdx < 0) newKeyIdx += 12;
+        keyDisplay.innerText = displayScale[newKeyIdx];
+
+        document.querySelectorAll('.chord-box').forEach(el => {
+            let index = calcScale.indexOf(el.dataset.root);
             let nIdx = (index + currentShift) % 12;
             if (nIdx < 0) nIdx += 12;
-            el.innerText = scale[nIdx];
-            el.classList.add('root');
+            el.querySelector('.root').innerText = displayScale[nIdx];
         });
     }
     loadSong();
