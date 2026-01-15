@@ -37,20 +37,8 @@
         }
         .measure:last-child { border-right: 2px solid #444; }
         
-        /* ルート音（音階）のスタイル修正 */
-        .root { 
-            font-size: 36px; /* 視認性のため少しだけ大きく */
-            font-weight: 400; /* 太字(900)から標準(400)に変更 */
-            color: #e74c3c;
-            line-height: 1;
-        }
-        /* 属性（m7, dimなど）のスタイル修正 */
-        .suffix { 
-            font-size: 20px; 
-            font-weight: 500; /* 少しだけ存在感を出すために中太に */
-            color: #444;
-            margin-left: 1px;
-        }
+        .root { font-size: 36px; font-weight: 400; color: #e74c3c; line-height: 1; }
+        .suffix { font-size: 20px; font-weight: 500; color: #444; margin-left: 1px; }
 
         .active-measure { background-color: #e3f2fd !important; box-shadow: inset 0 0 10px rgba(52, 152, 219, 0.3); }
         .short-measure { background-color: #fff9e6; border-right: 2px solid #444; }
@@ -99,7 +87,10 @@
     let originalSongKey = "G";
     let isPlaying = false;
 
-    const reverb = new Tone.Reverb({ decay: 4, wet: 0.4 }).toDestination();
+    // リバーブ設定
+    const reverb = new Tone.Reverb({ decay: 4.5, wet: 0.45 }).toDestination();
+
+    // サンプラー設定
     const sampler = new Tone.Sampler({
         urls: {
             A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3", A1: "A1.mp3",
@@ -109,7 +100,7 @@
             C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3", A5: "A5.mp3",
             C6: "C6.mp3"
         },
-        release: 1.5,
+        release: 2.5, // 指を離した後の余韻を少し長く
         baseUrl: "https://tonejs.github.io/audio/salamander/",
         onload: () => {
             document.getElementById('play-btn').disabled = false;
@@ -173,8 +164,11 @@
         allMeasures.forEach((mDiv) => {
             const chords = Array.from(mDiv.querySelectorAll('.chord-box')).map(el => el.dataset.fullChord);
             const isShort = mDiv.classList.contains('short-measure');
-            const measureDur = isShort ? "2n" : "1n";
             
+            // 小節全体の長さ（秒）
+            const measureTotalSeconds = isShort ? Tone.Time("2n").toSeconds() : Tone.Time("1n").toSeconds();
+
+            // ハイライト表示のスケジューリング
             Tone.Transport.schedule((time) => {
                 Tone.Draw.schedule(() => {
                     allMeasures.forEach(m => m.classList.remove('active-measure'));
@@ -183,12 +177,23 @@
             }, currentTime);
 
             if (chords.length === 1) {
-                Tone.Transport.schedule((time) => { sampler.triggerAttackRelease(getChordNotes(chords[0]), "2n", time); }, currentTime);
+                // 1小節に1コード：小節全体の長さ分音を伸ばす
+                Tone.Transport.schedule((time) => {
+                    sampler.triggerAttackRelease(getChordNotes(chords[0]), isShort ? "2n" : "1n", time);
+                }, currentTime);
             } else if (chords.length === 2) {
-                Tone.Transport.schedule((time) => { sampler.triggerAttackRelease(getChordNotes(chords[0]), "4n", time); }, currentTime);
-                Tone.Transport.schedule((time) => { sampler.triggerAttackRelease(getChordNotes(chords[1]), "4n", time); }, currentTime + (isShort ? Tone.Time("4n").toSeconds() : Tone.Time("2n").toSeconds()));
+                // 1小節に2コード：それぞれ小節の半分の長さ分音を伸ばす
+                const halfDur = isShort ? "4n" : "2n";
+                const halfSec = measureTotalSeconds / 2;
+                Tone.Transport.schedule((time) => {
+                    sampler.triggerAttackRelease(getChordNotes(chords[0]), halfDur, time);
+                }, currentTime);
+                Tone.Transport.schedule((time) => {
+                    sampler.triggerAttackRelease(getChordNotes(chords[1]), halfDur, time);
+                }, currentTime + halfSec);
             }
-            currentTime += Tone.Time(measureDur).toSeconds();
+
+            currentTime += measureTotalSeconds;
         });
         Tone.Transport.start();
     }
